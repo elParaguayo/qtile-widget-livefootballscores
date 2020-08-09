@@ -19,6 +19,14 @@ class MatchEvent(object):
         return self.eventType == self.TYPE_GOAL
 
     @property
+    def isStatusChange(self):
+        return self.eventType == self.TYPE_STATUS
+
+    @property
+    def isNewMatch(self):
+        return self.eventType == self.TYPE_NEW_MATCH
+
+    @property
     def isLive(self):
         return self.match.isLive
 

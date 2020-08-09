@@ -722,7 +722,14 @@ class FootballMatch(matchcommon):
     @property
     @_no_match(False)
     def isLive(self):
-        return self.match.eventStatus == "mid-event"
+        return (self.match.eventStatus == "mid-event" and
+               not self.Status == self.STATUS_HALF_TIME)
+
+    @property
+    @_no_match(False)
+    def isHalfTime(self):
+        return (self.match.eventStatus == "mid-event" and
+               self.Status == self.STATUS_HALF_TIME)
 
     @property
     @_no_match(False)

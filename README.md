@@ -15,6 +15,9 @@ Here is a screenshot from my HTPC showing the widget in the bar.
 ![Screenshot](images/livefootballscores.gif?raw=true)</br>
 (The different screens show: live score, elapsed time, home and away goalscorers and competition name. In addition, the amount of text shown can be customised by using python's string formatting techniques e.g. the default line "{H:.3} {h}-{a} {A:.3}" shows the first 3 letters of team names rather than the full name as shown above.)
 
+## Indicators
+
+Goals and red cards are indicated by a coloured bar next to the relevant team name. The match status is indicated by a coloured bar underneath the match summary. All colours are customisable.
 
 ## Installation
 
@@ -101,6 +104,38 @@ The widget can be customised with the following arguments:
         <tr>
                 <td>info_timeout</td>
                 <td>Time before reverting to default text</td>
+        </tr>
+        <tr>
+                <td>goal_indicator</td>
+                <td>Colour of line to show team that scores</td>
+        </tr>
+        <tr>
+                <td>red_card_indicator</td>
+                <td>Colour of line to show team has had a player sent off.</td>
+        </tr>
+        <tr>
+                <td>always_show_red</td>
+                <td>Continue to show red card indicator</td>
+        </tr>
+        <tr>
+                <td>underline_status</td>
+                <td>Bar at bottom of widget to indicate status.</td>
+        </tr>
+        <tr>
+                <td>status_fixture</td>
+                <td>Colour when match has not started</td>
+        </tr>
+        <tr>
+                <td>status_live</td>
+                <td>Colour when match has not started</td>
+        </tr>
+        <tr>
+                <td>status_halftime</td>
+                <td>Colour when match has not started</td>
+        </tr>
+        <tr>
+                <td>status_fulltime</td>
+                <td>Colour when match has not started</td>
         </tr>
 </table>
 
