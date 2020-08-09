@@ -1,0 +1,1 @@
+from .livefootballscores import LiveFootballScoresWidget
