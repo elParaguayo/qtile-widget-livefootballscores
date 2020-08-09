@@ -127,15 +127,15 @@ The widget can be customised with the following arguments:
         </tr>
         <tr>
                 <td>status_live</td>
-                <td>Colour when match has not started</td>
+                <td>Colour when match is live</td>
         </tr>
         <tr>
                 <td>status_halftime</td>
-                <td>Colour when match has not started</td>
+                <td>Colour when half time</td>
         </tr>
         <tr>
                 <td>status_fulltime</td>
-                <td>Colour when match has not started</td>
+                <td>Colour when match has ended</td>
         </tr>
 </table>
 
