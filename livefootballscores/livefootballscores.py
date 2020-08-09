@@ -41,9 +41,9 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         ("always_show_red", True, "Continue to show red card indicator"),
         ("underline_status", True, "Bar at bottom of widget to indicate status."),
         ("status_fixture", "000000", "Colour when match has not started"),
-        ("status_live", "008800", "Colour when match has not started"),
-        ("status_halftime", "aaaa00", "Colour when match has not started"),
-        ("status_fulltime", "666666", "Colour when match has not started"),
+        ("status_live", "008800", "Colour when match is live"),
+        ("status_halftime", "aaaa00", "Colour when half time"),
+        ("status_fulltime", "666666", "Colour when match has ended"),
     ]
 
     def __init__(self, **config):
@@ -60,8 +60,6 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
                                    on_red=self.match_event,
                                    on_status_change=self.match_event,
                                    on_new_match=self.match_event)
-
-
 
         # Define our screens
         self.screens = [self.status_text] + self.info_text
