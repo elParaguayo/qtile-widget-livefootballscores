@@ -5,6 +5,7 @@ from time import sleep
 import requests
 
 from .base import matchcommon
+from .exceptions import FSConnectionError
 from .matchdict import MatchDict
 from .matchdict import MatchDictKeys as MDKey
 from .matchevent import MatchEvent
@@ -188,7 +189,12 @@ class FootballMatch(matchcommon):
 
     def _request(self, url):
         url = API_BASE + url
-        r = requests.get(url)
+        try:
+            r = requests.get(url)
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout) as e:
+            raise FSConnectionError
+            
         if r.status_code == 200:
             return r.json()
         else:
@@ -728,7 +734,7 @@ class FootballMatch(matchcommon):
     @property
     @_no_match(False)
     def isHalfTime(self):
-        return self.Status == self.STATUS_HALF_TIME
+        return self.Status == self.STATUS_HALF_TIMEq
 
     @property
     @_no_match(False)

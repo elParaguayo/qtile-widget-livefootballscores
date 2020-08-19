@@ -6,6 +6,8 @@ import requests
 import time
 import json
 
+from .exceptions import FSConnectionError
+
 try:
     from json.decoder import JSONDecodeError
 except ImportError:
@@ -85,6 +87,9 @@ class matchcommon(object):
                     return result["moments"]
             except JSONDecodeError:
                 pass
+            except (requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout) as e:
+                    raise FSConnectionError
 
             time.sleep(self.TIMEOUT)
 

@@ -2,7 +2,7 @@ from libqtile.widget import base
 from libqtile import bar, images
 from libqtile.log_utils import logger
 
-from .footballscores import FootballMatch
+from .footballscores import FootballMatch, FSConnectionError
 
 
 class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
@@ -53,13 +53,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
         self.reset_flags()
 
-        # Create foorball match object
-        self.match = FootballMatch(self.team,
-                                   detailed=True,
-                                   on_goal=self.match_event,
-                                   on_red=self.match_event,
-                                   on_status_change=self.match_event,
-                                   on_new_match=self.match_event)
+        self.match = None
 
         # Define our screens
         self.screens = [self.status_text] + self.info_text
@@ -80,8 +74,22 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.set_refresh_timer()
-        self.queue_update()
+        self.find_team()
+
+    def find_team(self):
+        try:
+            # Create foorball match object
+            self.match = FootballMatch(self.team,
+                                       detailed=True,
+                                       on_goal=self.match_event,
+                                       on_red=self.match_event,
+                                       on_status_change=self.match_event,
+                                       on_new_match=self.match_event)
+            self.set_refresh_timer()
+            self.queue_update()
+        except FSConnectionError:
+            # Can't connect, so let's try again later
+            self.timeout_add(5, self.find_team)
 
     def set_refresh_timer(self):
         self.refresh_timer = self.timeout_add(self.refresh_interval,
@@ -89,9 +97,14 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
     def refresh(self):
         self.reset_flags()
-        self.match.update()
+        try:
+            self.match.update()
+            self.queue_update()
+        except FSConnectionError:
+            if self.queue_timer:
+                self.queue_timer.cancel()
+
         self.set_refresh_timer()
-        self.queue_update()
 
     def match_event(self, event):
         if event.isGoal:
