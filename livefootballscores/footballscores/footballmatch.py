@@ -734,7 +734,7 @@ class FootballMatch(matchcommon):
     @property
     @_no_match(False)
     def isHalfTime(self):
-        return self.Status == self.STATUS_HALF_TIMEq
+        return self.Status == self.STATUS_HALF_TIME
 
     @property
     @_no_match(False)
