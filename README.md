@@ -8,6 +8,8 @@ The module uses a module I wrote a number of years ago that parses data from the
 
 The underlying module needs work so it will probably only work if you pick a "big" team.
 
+You can select more than one team and league. Scores can be scrolled by using the mousewheel over the widget.
+
 ## Demo
 
 Here is a screenshot from my HTPC showing the widget in the bar.
@@ -75,6 +77,14 @@ The widget can be customised with the following arguments:
         <tr>
                 <td>team</td>
                 <td>Team whose scores you want to display</td>
+        </tr>
+        <tr>
+                <td>teams</td>
+                <td>List of other teams whose scores you want to display</td>
+        </tr>
+        <tr>
+                <td>leagues</td>
+                <td>Leagues whose scores you want to display</td>
         </tr>
         <tr>
                 <td>status_text</td>

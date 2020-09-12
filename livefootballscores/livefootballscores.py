@@ -2,7 +2,32 @@ from libqtile.widget import base
 from libqtile import bar, images
 from libqtile.log_utils import logger
 
-from .footballscores import FootballMatch, FSConnectionError
+from .footballscores import FootballMatch, League, FSConnectionError
+
+
+# Massively overkill to use a class here...
+class MatchFlags(object):
+
+    def __init__(self):
+        self._reset()
+
+    def _reset(self):
+        self.homegoal = False
+        self.awaygoal = False
+        self.statuschange = False
+        self.homered = False
+        self.awayred = False
+
+    @property
+    def changes(self):
+        return any([self.homegoal,
+                    self.awaygoal,
+                    self.statuschange,
+                    self.homered,
+                    self.awayred])
+
+    def reset(self):
+        self._reset()
 
 
 class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
@@ -12,7 +37,9 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         ("font", "sans", "Default font"),
         ("fontsize", None, "Font size"),
         ("font_colour", "ffffff", "Text colour"),
-        ("team", "Chelsea", "Team whose scores you want to display"),
+        ("team", "Liverpool", "Team whose scores you want to display"),
+        ("teams", [], "List of other teams you want to display"),
+        ("leagues", [], "List of leagues you want to display"),
         ("status_text", "{H:.3} {h}-{a} {A:.3}", "Default widget match text"),
         ("info_text",
             ["{T:^12}",
@@ -50,10 +77,12 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(LiveFootballScoresWidget.defaults)
         self.add_defaults(base.MarginMixin.defaults)
-
+        self.flags = {}
         self.reset_flags()
 
-        self.match = None
+        self.sources = ([],[],[])
+        self.matches = []
+        self.match_index = 0
 
         # Define our screens
         self.screens = [self.status_text] + self.info_text
@@ -66,30 +95,81 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         self.queue_timer = None
 
     def reset_flags(self):
-        self.homegoal = False
-        self.awaygoal = False
-        self.statuschange = False
-        self.homered = False
-        self.awayred = False
+        for flag in self.flags:
+            self.flags[flag].reset()
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.find_team()
+        self.setup()
 
-    def find_team(self):
+
+    def setup(self):
+        kwargs = {"detailed": True,
+                  "on_goal": self.match_event,
+                  "on_red": self.match_event,
+                  "on_status_change": self.match_event,
+                  "on_new_match": self.match_event}
+
         try:
             # Create foorball match object
-            self.match = FootballMatch(self.team,
-                                       detailed=True,
-                                       on_goal=self.match_event,
-                                       on_red=self.match_event,
-                                       on_status_change=self.match_event,
-                                       on_new_match=self.match_event)
+            if not self.sources[0]:
+                myteam = FootballMatch(self.team, **kwargs)
+                self.sources[0].append(myteam)
+
+            if not self.sources[1] and self.teams:
+                self.sources[1].clear()
+                for team in self.teams:
+                    self.sources[1].append(FootballMatch(team, **kwargs))
+
+            if not self.sources[2] and self.leagues:
+                self.sources[2].clear()
+                for league in self.leagues:
+                    self.sources[2].append(League(league, **kwargs))
+
+            self.get_matches()
             self.set_refresh_timer()
             self.queue_update()
+
         except FSConnectionError:
+
+            logger.warning("Unable to get football scores data.")
+
+            # Check if we managed to create all teams and leagues objects
+            if len(self.sources[1]) != len(self.teams):
+                self.sources[1].clear()
+
+            if len(self.sources[2]) != len(self.leagues):
+                self.sources[2].clear()
+
             # Can't connect, so let's try again later
-            self.timeout_add(5, self.find_team)
+            self.timeout_add(5, self.setup)
+
+    def get_matches(self):
+        self.matches = []
+
+        if self.sources[0]:
+            self.matches.extend([x for x in self.sources[0] if x])
+
+        if self.sources[1]:
+            self.matches.extend([x for x in self.sources[1] if x])
+
+        if self.sources[2]:
+            for league in self.sources[2]:
+                if league:
+                    # League object has iterator methods so can be treated as a list
+                    self.matches.extend(league)
+
+        self.set_flags()
+
+    def set_flags(self):
+        for m in self.matches:
+            if m.HomeTeam not in self.flags:
+                self.flags[m.HomeTeam] = MatchFlags()
+
+        current = [x.HomeTeam for x in self.matches]
+
+        for old in [x for x in self.flags if x not in current]:
+            del self.flags[old]
 
     def set_refresh_timer(self):
         self.refresh_timer = self.timeout_add(self.refresh_interval,
@@ -98,28 +178,43 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
     def refresh(self):
         self.reset_flags()
         try:
-            self.match.update()
+            if self.sources[0]:
+                _ = [x.update() for x in self.sources[0]]
+
+            if self.sources[1]:
+                _ = [x.update() for x in self.sources[1]]
+
+            if self.sources[2]:
+                _ = [x.update() for x in self.sources[2]]
+
             self.queue_update()
+
         except FSConnectionError:
+            logger.warning("Unable to refresh football scores data.")
             if self.queue_timer:
                 self.queue_timer.cancel()
 
         self.set_refresh_timer()
 
     def match_event(self, event):
+
+        self.set_flags()
+
+        team = event.match.HomeTeam
+        flags = self.flags[team]
+
         if event.isGoal:
-            self.homegoal = event.home
-            self.awaygoal = not event.home
+            flags.homegoal = event.home
+            flags.awaygoal = not event.home
 
         elif event.isRed:
-            self.homered = event.home
-            self.awayred = not event.home
+            flags.homered = event.home
+            flags.awayred = not event.home
 
         elif event.isStatusChange:
-            self.statuschange = True
+            flags.statuschange = True
 
-        if any([self.homegoal, self.awaygoal, self.homered, self.awayred,
-                self.statuschange]):
+        if flags.changes:
             self.queue_update()
 
     def queue_update(self):
@@ -128,11 +223,23 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
         self.queue_timer = self.timeout_add(1, self.update)
 
+    def get_match(self):
+
+        if self.match_index >= len(self.matches):
+            self.match_index = 0
+
+        try:
+            return self.matches[self.match_index]
+        except IndexError:
+            return None
+
     def calculate_length(self):
 
-        if self.match:
+        m = self.get_match()
+
+        if m:
             screen = self.screens[self.screen_index]
-            text = self.match.formatText(screen)
+            text = m.formatText(screen)
         else:
             text = ""
 
@@ -148,9 +255,11 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         # Remove background
         self.drawer.clear(self.background or self.bar.background)
 
-        if self.match:
+        m = self.get_match()
+
+        if m:
             screen = self.screens[self.screen_index]
-            text = self.match.formatText(screen)
+            text = m.formatText(screen)
         else:
             text = ""
 
@@ -168,23 +277,27 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         # Draw it
         layout.draw(self.margin_x, y_offset)
 
-        if self.screen_index == 0:
-            if self.homegoal:
-                self.draw_goal(True)
+        if m:
 
-            if self.awaygoal:
-                self.draw_goal(False)
+            flags = self.flags[m.HomeTeam]
 
-            if self.homered or (self.always_show_red and
-                                self.match.HomeRedCards):
-                self.draw_red(True)
+            if self.screen_index == 0:
+                if flags.homegoal:
+                    self.draw_goal(True)
 
-            if self.awayred or (self.always_show_red and
-                                self.match.AwayRedCards):
-                self.draw_red(False)
+                if flags.awaygoal:
+                    self.draw_goal(False)
 
-            if self.underline_status:
-                self.draw_underline()
+                if flags.homered or (self.always_show_red and
+                                     m.HomeRedCards):
+                    self.draw_red(True)
+
+                if flags.awayred or (self.always_show_red and
+                                     m.AwayRedCards):
+                    self.draw_red(False)
+
+                if self.underline_status:
+                    self.draw_underline(m)
 
         # Redraw the bar
         self.bar.draw()
@@ -213,11 +326,9 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
                              self.height/2,
                              2)
 
-    def draw_underline(self):
+    def draw_underline(self, m):
         offset = 2
         width = self.width - 2
-
-        m = self.match
 
         if m.isFixture:
             fill = self.status_fixture
@@ -248,6 +359,19 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
             self.set_default_timer()
             self.screen_index = (self.screen_index + 1) % len(self.screens)
             self.update()
+
+        elif button == 4:
+            self.change_match(1)
+
+        elif button == 5:
+            self.change_match(-1)
+
+    def change_match(self, step):
+        self.screen_index = 0
+        if self.matches:
+            self.match_index = (self.match_index + step) % len(self.matches)
+            self.update()
+
 
     def set_default_timer(self):
         if self.default_timer:

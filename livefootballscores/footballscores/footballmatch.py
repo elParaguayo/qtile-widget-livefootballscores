@@ -96,10 +96,10 @@ class FootballMatch(matchcommon):
                 self._scanLeagues()
 
             if self.hasTeamPage:
-                self.update()
+                self.update(first_run=True)
 
         if data:
-            self.update(data=data)
+            self.update(data=data, first_run=True)
 
     def __nonzero__(self):
 
@@ -115,10 +115,9 @@ class FootballMatch(matchcommon):
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self.match.eventKey == other.match.eventKey
-            if self.match and other.match:
+            try:
                 return self.match.eventKey == other.match.eventKey
-            else:
+            except AttributeError:
                 return self.myteam == other.myteam
         else:
             return False
@@ -194,7 +193,7 @@ class FootballMatch(matchcommon):
         except (requests.exceptions.ConnectionError,
                 requests.exceptions.Timeout) as e:
             raise FSConnectionError
-            
+
         if r.status_code == 200:
             return r.json()
         else:
@@ -514,7 +513,7 @@ class FootballMatch(matchcommon):
 
         return fmt.format(**d)
 
-    def update(self, data=None):
+    def update(self, data=None, first_run=False):
 
         if data is None and not self._canUpdate():
             self.hasTeamPage = self._findTeamPage()
@@ -544,13 +543,15 @@ class FootballMatch(matchcommon):
                 self._old = self.match
                 self._clearFlags()
                 self._matchfound = True
-                self._fireEvents()
+                if not first_run:
+                    self._fireEvents()
                 return True
 
             else:
                 self._clearFlags()
                 self.match.update(match)
-                self._fireEvents()
+                if not first_run:
+                    self._fireEvents()
                 self._old = self.match
                 return False
 
