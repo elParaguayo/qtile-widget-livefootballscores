@@ -187,6 +187,8 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
             if self.sources[2]:
                 _ = [x.update() for x in self.sources[2]]
 
+            self.get_matches()
+
             self.queue_update()
 
         except FSConnectionError:
