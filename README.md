@@ -116,6 +116,10 @@ The widget can be customised with the following arguments:
                 <td>Time before reverting to default text</td>
         </tr>
         <tr>
+                <td>startup_delay</td>
+                <td>TDelay before first data request (enables quicker loading)</td>
+        </tr>
+        <tr>
                 <td>goal_indicator</td>
                 <td>Colour of line to show team that scores</td>
         </tr>

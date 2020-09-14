@@ -63,6 +63,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         ),
         ("refresh_interval", 60, "Time to update data"),
         ("info_timeout", 5, "Time before reverting to default text"),
+        ("startup_delay", 30, "Time before sending first web request")
         ("goal_indicator", "009999", "Colour of line to show team that scores"),
         ("red_card_indicator", "bb0000", "Colour of line to show team has had a player sent off."),
         ("always_show_red", True, "Continue to show red card indicator"),
@@ -101,8 +102,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
         self.matches = []
-        self.timeout_add(30, self.setup)
-
+        self.timeout_add(self.startup_delay, self.setup)
 
     def setup(self):
         kwargs = {"detailed": True,
