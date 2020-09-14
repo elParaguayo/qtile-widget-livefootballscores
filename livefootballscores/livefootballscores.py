@@ -100,7 +100,8 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.setup()
+        self.matches = []
+        self.timeout_add(30, self.setup)
 
 
     def setup(self):
@@ -203,7 +204,15 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         self.set_flags()
 
         team = event.match.HomeTeam
-        flags = self.flags[team]
+
+        try:
+            flags = self.flags[team]
+        except KeyError:
+            # This should only happen when a new match for watched teams appears
+            # Events are fired on first time, before they can be added to the flags
+            # It should be safe to ignore this as the flags will be updated separately
+            self.flags[team] = MatchFlags()
+            flags = self.flags[team]
 
         if event.isGoal:
             flags.homegoal = event.home

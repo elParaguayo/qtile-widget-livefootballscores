@@ -66,7 +66,7 @@ class FootballMatch(matchcommon):
 
     def __init__(self, team, detailed = True, data = None, on_goal=None,
                  on_red=None, on_status_change=None, on_new_match=None,
-                 matchdate=None):
+                 matchdate=None, events_on_first_run=False):
         '''Creates an instance of the Match object.
         Must be created by passing the name of one team.
 
@@ -96,10 +96,10 @@ class FootballMatch(matchcommon):
                 self._scanLeagues()
 
             if self.hasTeamPage:
-                self.update(first_run=True)
+                self.update(first_run=events_on_first_run)
 
         if data:
-            self.update(data=data, first_run=True)
+            self.update(data=data, first_run=events_on_first_run)
 
     def __nonzero__(self):
 
