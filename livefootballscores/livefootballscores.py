@@ -63,7 +63,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         ),
         ("refresh_interval", 60, "Time to update data"),
         ("info_timeout", 5, "Time before reverting to default text"),
-        ("startup_delay", 30, "Time before sending first web request")
+        ("startup_delay", 30, "Time before sending first web request"),
         ("goal_indicator", "009999", "Colour of line to show team that scores"),
         ("red_card_indicator", "bb0000", "Colour of line to show team has had a player sent off."),
         ("always_show_red", True, "Continue to show red card indicator"),
