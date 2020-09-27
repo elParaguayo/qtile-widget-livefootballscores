@@ -25,8 +25,6 @@ from .morphlinks import ML
 API_BASE = "http://push.api.bbci.co.uk/p"
 API_MORPH = "morph:/"
 
-
-
 REFERER = "http://www.bbc.co.uk/sport/football/scores-fixtures"
 
 class matchcommon(object):
@@ -38,27 +36,6 @@ class matchcommon(object):
     def __init__(self, retry_count=5, timeout=0.5):
         self.RETRY_COUNT = retry_count
         self.TIMEOUT = 0.5
-
-    # livescoreslink = ("http://www.bbc.co.uk/sport/shared/football/live-scores/matches/{comp}/today")
-
-    # def getPage(self, url, sendresponse = False):
-    #     page = None
-    #     try:
-    #         # user_agent = ('Mozilla/5.0 (Windows; U; Windows NT 6.1; '
-    #         #               'en-US; rv:1.9.1.5) Gecko/20091102 Firefox')
-    #         # headers = { 'User-Agent' : user_agent }
-    #
-    #         request = urllib2.Request(url)
-    #         response = urllib2.urlopen(request)
-    #         page = response.read()
-    #     except:
-    #         pass
-    #
-    #     if sendresponse:
-    #         return response
-    #     else:
-    #         # Fixed this line to handle accented team namess
-    #         return codecs.decode(page, "utf-8") if page else None
 
     def __create_payload(self, page):
 
@@ -102,10 +79,6 @@ class matchcommon(object):
         r = requests.get(API_BASE, params=payload,
                          headers={"Referer": REFERER}, stream=True).json()
 
-        # for line in r.iter_lines():
-        #     if line:
-        #         print line
-
     def getTeams(self):
 
         teams = self.sendRequest(ML.MORPH_TEAMS_COMPS)
@@ -121,7 +94,6 @@ class matchcommon(object):
         if teams:
             teams = json.loads(teams[0]["payload"])
             return [x for x in teams if "teams" not in x["url"]]
-
 
 def getAllTeams():
     return matchcommon().getTeams()

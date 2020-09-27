@@ -177,6 +177,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
                                               self.refresh)
 
     def refresh(self):
+        success = False
         self.reset_flags()
         try:
             if self.sources[0]:
@@ -192,12 +193,16 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
             self.queue_update()
 
+            success = True
+
         except FSConnectionError:
             logger.warning("Unable to refresh football scores data.")
             if self.queue_timer:
                 self.queue_timer.cancel()
 
         self.set_refresh_timer()
+
+        return success
 
     def match_event(self, event):
 
@@ -395,3 +400,40 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         # Show first screen
         self.screen_index = 0
         self.update()
+
+    def cmd_info(self):
+        str_team = self.team
+        str_teams = ",".join(self.teams)
+        str_leagues = ",".join(self.leagues)
+        obj_team = ",".join([str(team) for team in self.sources[0]])
+
+        obj_teams = {}
+        for team in self.sources[1]:
+            obj_teams[team.myteam] = str(team)
+
+        obj_leagues = {}
+        for league in self.sources[2]:
+            obj_leagues[league.league] = {}
+            for i, m in enumerate(league):
+                obj_leagues[league.league][i] = str(m)
+
+        matches = {}
+        for i, m in enumerate(self.matches):
+            matches[i] = str(m)
+
+        return {"name": self.name,
+                "sources": {
+                    "team": str_team,
+                    "teams": str_teams,
+                    "leagues": str_leagues
+                },
+                "objects": {
+                    "team": obj_team,
+                    "teams": obj_teams,
+                    "leagues": obj_leagues
+                },
+                "matches": matches
+                }
+
+    def cmd_refresh(self):
+        return self.refresh()

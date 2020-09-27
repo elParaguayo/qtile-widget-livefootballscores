@@ -520,20 +520,15 @@ class FootballMatch(matchcommon):
             if not self._canUpdate():
                 return False
 
-
         if data is None:
             rawdata = self._getScoresFixtures()
             if rawdata:
-                #match = json.loads(rawdata[0]["payload"])
                 match = self._findMatch(rawdata)
             else:
-                return False
-
+                match = None
 
         if data:
             match = data
-
-
 
         if match:
 
@@ -545,7 +540,6 @@ class FootballMatch(matchcommon):
                 self._matchfound = True
                 if not first_run:
                     self._fireEvents()
-                return True
 
             else:
                 self._clearFlags()
@@ -553,18 +547,16 @@ class FootballMatch(matchcommon):
                 if not first_run:
                     self._fireEvents()
                 self._old = self.match
-                return False
 
-        #     else:
-        #         self._clearFlags()
-        #         self._old = None
-        #         self.match = None
-        #
-        #     return True
-        #
-        # return False
+            return True
 
+        # Need this to clear the match if no data (e.g. next day)
+        elif match is None and self.match:
+            self._clearFlags()
+            self.match = MatchDict()
+            return True
 
+        return False
 
     #
     # # Neater functions to return data:
@@ -883,8 +875,6 @@ class FootballMatch(matchcommon):
 
         return self.match.startTime
 
-
-
     @property
     @_no_match(None)
     def TimeToKickOff(self):
@@ -893,9 +883,7 @@ class FootballMatch(matchcommon):
         Returns None if unable to parse match time or if match in progress.
         '''
         if HAS_DATEUTIL and self.isFixture:
-
             return self.StartTimeDatetime.astimezone(TZ_UTZ) - datetime.now(TZ_UTZ)
 
         else:
-
             return None
