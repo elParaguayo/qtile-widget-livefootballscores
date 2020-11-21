@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='qtile-widget-livefootballscores',
-    packages=['livefootballscoresy'],
+    packages=['livefootballscores'],
     version='0.1.0',
     description='A qtile widget to show live football scores.',
     author='elParaguayo',
