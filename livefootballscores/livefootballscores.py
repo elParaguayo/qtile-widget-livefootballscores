@@ -99,6 +99,29 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         for flag in self.flags:
             self.flags[flag].reset()
 
+    def reboot(self):
+        """
+        Sometimes the widget won't update (and I don't know why).
+        This method should reset everything and start the widget again.
+
+        Can be bound to a key e.g.:
+           lazy.widget["livefootballscoreswidget"].reboot
+        """
+
+        timers = [self.queue_timer, self.default_timer, self.refresh_timer]
+        _ = [timer.cancel() for timer in timers if timer]
+
+        self.flags = {}
+        self.matches = []
+        self.sources = ([],[],[])
+
+        self.timeout_add(1, self.setup)
+
+        return True
+
+    def cmd_reboot(self):
+        return self.reboot()
+
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
         self.matches = []
