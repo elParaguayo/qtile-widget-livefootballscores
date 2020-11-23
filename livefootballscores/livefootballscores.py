@@ -260,7 +260,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         if self.queue_timer:
             self.queue_timer.cancel()
 
-        self.queue_timer = self.timeout_add(1, self.update)
+        self.queue_timer = self.timeout_add(1, self.bar.draw)
 
     def get_match(self):
 
@@ -290,7 +290,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
         return width + 2 * self.margin
 
-    def update(self):
+    def draw(self):
         # Remove background
         self.drawer.clear(self.background or self.bar.background)
 
@@ -338,8 +338,9 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
                 if self.underline_status:
                     self.draw_underline(m)
 
-        # Redraw the bar
-        self.bar.draw()
+        # # Redraw the bar
+        # self.bar.draw()
+        self.drawer.draw(offsetx=self.offset, width=self.length)
 
     def draw_goal(self, home):
         offset = 0 if home else (self.width - 2)
@@ -389,15 +390,15 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
                              2,
                              2)
 
-    def draw(self):
-        self.drawer.draw(offsetx=self.offset, width=self.length)
+    # def draw(self):
+    #     self.drawer.draw(offsetx=self.offset, width=self.length)
 
     def button_press(self, x, y, button):
         # Check if it's a right click and, if so, toggle textt
         if button == 1:
             self.set_default_timer()
             self.screen_index = (self.screen_index + 1) % len(self.screens)
-            self.update()
+            self.bar.draw()
 
         elif button == 4:
             self.change_match(1)
@@ -409,7 +410,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         self.screen_index = 0
         if self.matches:
             self.match_index = (self.match_index + step) % len(self.matches)
-            self.update()
+            self.bar.draw()
 
 
     def set_default_timer(self):
@@ -422,7 +423,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
     def show_default(self):
         # Show first screen
         self.screen_index = 0
-        self.update()
+        self.bar.draw()
 
     def cmd_info(self):
         str_team = self.team
