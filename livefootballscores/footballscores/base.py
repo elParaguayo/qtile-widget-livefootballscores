@@ -1,7 +1,3 @@
-import codecs
-# import inspect
-# import urllib2
-# import urllib
 import requests
 import time
 import json
@@ -16,16 +12,10 @@ except ImportError:
 from .morphlinks import ML
 
 
-# http://push.api.bbci.co.uk/p?t=morph%3A%2F%2Fdata%2Fbbc-morph-football-scores-match-list-data%2FendDate%2F2017-08-31%2FstartDate%2F2017-08-01%2Ftournament%2Fpremier-league%2Fversion%2F2.2.3%2FwithPlayerActions%2Ffalse&c=1
-
-# '/data/bbc-morph-sport-teams-competitions-list/competitionURLTemplate/%2Fsport%2Ffootball%2F%7B%7Bslug%7D%7D%2Fscores-fixtures/sport/football/teamURLTemplate/%2Fsport%2Ffootball%2Fteams%2F%7B%7Bslug%7D%7D%2Fscores-fixtures/version/1.0.0'
-# '/data/bbc-morph-football-teams-competitions-list/competitionURLTemplate/%2Fsport%2Ffootball%2F%7B%7Bslug%7D%7D%2Fscores-fixtures/teamURLTemplate/%2Fsport%2Ffootball%2Fteams%2F%7B%7Bslug%7D%7D%2Fscores-fixtures/version/3.1.0'
-# "/data/bbc-morph-football-teams-competitions-list/teamURLTemplate/%2Fsport%2Ffootball%2Fteams%2F%7B%7Bslug%7D%7D%2Fscores-fixtures/version/3.1.0"
-
 API_BASE = "http://push.api.bbci.co.uk/p"
 API_MORPH = "morph:/"
-
 REFERER = "http://www.bbc.co.uk/sport/football/scores-fixtures"
+
 
 class matchcommon(object):
     '''class for common functions for match classes.'''
@@ -51,7 +41,6 @@ class matchcommon(object):
 
         return {"t": page, "c": type(self).REQUEST_COUNT}
 
-
     def sendRequest(self, page):
 
         payload = self.__create_payload(page)
@@ -65,19 +54,22 @@ class matchcommon(object):
             except JSONDecodeError:
                 pass
             except (requests.exceptions.ConnectionError,
-                    requests.exceptions.Timeout) as e:
-                    raise FSConnectionError
+                    requests.exceptions.Timeout):
+                raise FSConnectionError
 
             time.sleep(self.TIMEOUT)
 
         return None
 
+    # Unused?
     def requestPushStream(self, page):
 
         payload = self.__create_payload(page)
 
         r = requests.get(API_BASE, params=payload,
                          headers={"Referer": REFERER}, stream=True).json()
+
+        return r
 
     def getTeams(self):
 
@@ -95,8 +87,10 @@ class matchcommon(object):
             teams = json.loads(teams[0]["payload"])
             return [x for x in teams if "teams" not in x["url"]]
 
+
 def getAllTeams():
     return matchcommon().getTeams()
+
 
 def getAllTournaments():
     return matchcommon().getTournaments()

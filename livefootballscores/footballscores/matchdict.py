@@ -31,7 +31,7 @@ class MatchDict(dict):
        Callbacks are available for top level changes.
     """
     def __init__(self, *args, **kwargs):
-        cb =  kwargs.pop('add_callbacks', False)
+        cb = kwargs.pop('add_callbacks', False)
         self.update(*args, **kwargs)
         self.__dict__ = self
         if cb:
@@ -44,7 +44,8 @@ class MatchDict(dict):
     def __setitem__(self, item, value):
         try:
             if self[item] and value != self[item]:
-                for cb in [x for x in self._callbacks[item] if item in self._callbacks]:
+                for cb in [x for x in self._callbacks[item]
+                           if item in self._callbacks]:
                     cb(value)
 
         except KeyError:

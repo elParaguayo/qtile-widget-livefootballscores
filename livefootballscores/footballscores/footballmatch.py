@@ -1,7 +1,6 @@
-from datetime import datetime, time
+from datetime import datetime
 from itertools import groupby
 import json
-from time import sleep
 import requests
 
 from .base import matchcommon
@@ -33,13 +32,12 @@ class FootballMatch(matchcommon):
     '''Class for getting details of individual football matches.
     Data is pulled from BBC live scores page.
     '''
-    scoreslink = ("/proxy/data/bbc-morph-football-scores-match-list-data/endDate/"
-                  "{end_date}/startDate/{start_date}/{source}/version/2.4.0/"
-                  "withPlayerActions/{detailed}")
-#version 2.2.3
+    scoreslink = ("/proxy/data/bbc-morph-football-scores-match-list-data/"
+                  "endDate/{end_date}/startDate/{start_date}/{source}/"
+                  "version/2.4.0/withPlayerActions/{detailed}")
 
-    detailprefix =   ("http://www.bbc.co.uk/sport/football/live/"
-                      "partial/{id}")
+    detailprefix = ("http://www.bbc.co.uk/sport/football/live/"
+                    "partial/{id}")
 
     match_format = {"%H": "HomeTeam",
                     "%A": "AwayTeam",
@@ -64,7 +62,7 @@ class FootballMatch(matchcommon):
     STATUS_ET_FIRST_HALF = "EXTRATIMEFIRSTHALF"
     STATUS_ET_HALF_TIME = "EXTRATIMEHALFTIME"
 
-    def __init__(self, team, detailed = True, data = None, on_goal=None,
+    def __init__(self, team, detailed=True, data=None, on_goal=None,
                  on_red=None, on_status_change=None, on_new_match=None,
                  matchdate=None, events_on_first_run=False):
         '''Creates an instance of the Match object.
@@ -149,7 +147,6 @@ class FootballMatch(matchcommon):
 
         return wrapper
 
-
     def _override_none(value):
         """
         Decorator to provide default values for properties when there is no
@@ -181,7 +178,7 @@ class FootballMatch(matchcommon):
 
     def _dump(self, filename):
 
-        c = {k:v for k,v in self.match.iteritems() if k != "_callbacks"}
+        c = {k: v for k, v in self.match.iteritems() if k != "_callbacks"}
 
         with open(filename, "w") as f:
             json.dump(c, f, indent=4)
@@ -191,7 +188,7 @@ class FootballMatch(matchcommon):
         try:
             r = requests.get(url)
         except (requests.exceptions.ConnectionError,
-                requests.exceptions.Timeout) as e:
+                requests.exceptions.Timeout):
             raise FSConnectionError
 
         if r.status_code == 200:
@@ -216,30 +213,30 @@ class FootballMatch(matchcommon):
 
         return self.hasTeamPage
 
-
     def _scanLeagues(self):
 
         return self._getScoresFixtures(source=ML.MORPH_FIXTURES_ALL,
-                                      detailed=False)
+                                       detailed=False)
 
     def _findTeamPage(self):
         teams = self.getTeams()
 
         if teams:
-            myteam = [x for x in teams if self.myteam.lower() in x["name"].lower()]
+            myteam = [x for x in teams
+                      if self.myteam.lower() in x["name"].lower()]
             if myteam:
                 tm = myteam[0]["url"]
                 try:
                     self.myteampage = "team/{}".format(tm.split("/")[4])
                     return True
-                except:
+                except Exception:
                     self.myteampage = None
                     return False
 
         return False
 
     def _getScoresFixtures(self, start_date=None, end_date=None,
-                          source=None, detailed=None):
+                           source=None, detailed=None):
         if start_date is None:
             if self._matchdate:
                 start_date = self._matchdate
@@ -263,14 +260,13 @@ class FootballMatch(matchcommon):
                                     source=source,
                                     detailed=str(detailed).lower())
 
-        #return self.sendRequest(pl)
         return self._request(pl)
 
     def _findMatch(self, payload):
         match = payload["matchData"]
 
         if match:
-            return list(match[0]["tournamentDatesWithEvents"].values())[0][0]["events"][0]
+            return list(match[0]["tournamentDatesWithEvents"].values())[0][0]["events"][0]  # noqa: E501
         else:
             return None
 
@@ -285,7 +281,7 @@ class FootballMatch(matchcommon):
         player_actions = event.get("playerActions", list())
 
         for acts in player_actions:
-            player = acts["name"]["abbreviation"]
+            # player = acts["name"]["abbreviation"]
             for act in acts["actions"]:
                 if act["type"] == event_type:
                     pa = PlayerAction(acts, act)
@@ -316,8 +312,8 @@ class FootballMatch(matchcommon):
 
         reds = []
         red = self._lastEvent(self.ACTION_RED_CARD,
-                             just_home=just_home,
-                             just_away=just_away)
+                              just_home=just_home,
+                              just_away=just_away)
         yellow = self._lastEvent(self.ACTION_YELLOW_RED_CARD,
                                  just_home=just_home,
                                  just_away=just_away)
@@ -342,9 +338,9 @@ class FootballMatch(matchcommon):
     def _getGoals(self, event):
         return self._getEvents(event, self.ACTION_GOAL)
 
-
     def _checkGoal(self, old, new):
-        return (old.scores.score != new.scores.score) and (new.scores.score > 0)
+        return ((old.scores.score != new.scores.score)
+                and (new.scores.score > 0))
 
     def _checkRed(self, old, new):
 
@@ -439,7 +435,8 @@ class FootballMatch(matchcommon):
             return (event.ElapsedTime, event.AddedTime)
 
         events = sorted(events, key=lambda x: x.FullName)
-        events = [list(y) for x, y in groupby(events, key=lambda x: x.FullName)]
+        events = [list(y) for x, y in groupby(events,
+                                              key=lambda x: x.FullName)]
         events = sorted(events, key=lambda x: timesort(x[0]))
         events = [sorted(x, key=timesort) for x in events]
 
@@ -488,14 +485,14 @@ class FootballMatch(matchcommon):
         values = {k[1]: getattr(self, v) for k, v in self.match_format.items()}
         return text.format(**values)
 
-
     def formatMatch(self, fmt):
 
         for key in self.match_format:
             try:
                 fmt = fmt.replace(key, getattr(self, self.match_format[key]))
             except TypeError:
-                fmt = fmt.replace(key, str(getattr(self, self.match_format[key])))
+                fmt = fmt.replace(key,
+                                  str(getattr(self, self.match_format[key])))
 
         return fmt
 
@@ -722,7 +719,7 @@ class FootballMatch(matchcommon):
     @_no_match(False)
     def isLive(self):
         return (self.match.eventStatus == "mid-event" and
-               not self.Status == self.STATUS_HALF_TIME)
+                not self.Status == self.STATUS_HALF_TIME)
 
     @property
     @_no_match(False)
@@ -846,7 +843,6 @@ class FootballMatch(matchcommon):
         """
         return self.__unicode__()
 
-
     @property
     @_no_match(str())
     def StartTimeUK(self):
@@ -883,7 +879,8 @@ class FootballMatch(matchcommon):
         Returns None if unable to parse match time or if match in progress.
         '''
         if HAS_DATEUTIL and self.isFixture:
-            return self.StartTimeDatetime.astimezone(TZ_UTZ) - datetime.now(TZ_UTZ)
+            return (self.StartTimeDatetime.astimezone(TZ_UTZ)
+                    - datetime.now(TZ_UTZ))
 
         else:
             return None

@@ -6,6 +6,7 @@ from .footballmatch import FootballMatch
 
 API_BASE = "http://push.api.bbci.co.uk"
 
+
 class League(matchcommon):
 
     leaguelink = ("/proxy/data/bbc-morph-football-scores-match-list-data/"
@@ -62,14 +63,14 @@ class League(matchcommon):
     def findleague(self, league):
         leagues = self.getTournaments()
         if leagues:
-            for l in leagues:
-                if l["name"].lower() == league.lower():
-                    return l["url"].split("/")[3]
+            for lg in leagues:
+                if lg["name"].lower() == league.lower():
+                    return lg["url"].split("/")[3]
 
         return None
 
     def _getScoresFixtures(self, start_date=None, end_date=None,
-                          source=None, detailed=None):
+                           source=None, detailed=None):
         if start_date is None:
             start_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -87,7 +88,6 @@ class League(matchcommon):
                                     tournament=source,
                                     detailed=str(detailed).lower())
 
-
         return self._request(pl)
 
     def _getRawData(self):
@@ -99,11 +99,10 @@ class League(matchcommon):
             return []
 
         data = rawdata["matchData"][0]["tournamentDatesWithEvents"]
-        #data = list(data.values())[0][0]
+
         mdata = []
         for event in list(data.values())[0]:
             mdata += event["events"]
-        #data = data["events"]
 
         return mdata
 
@@ -116,12 +115,12 @@ class League(matchcommon):
         for m in data:
             home = m["homeTeam"]["name"]["abbreviation"]
             fmatch = FootballMatch(home,
-                                  data=m,
-                                  detailed=self.detailed,
-                                  on_goal=self.on_goal,
-                                  on_red=self.on_red,
-                                  on_status_change=self.on_status_change,
-                                  on_new_match=self.on_new_match)
+                                   data=m,
+                                   detailed=self.detailed,
+                                   on_goal=self.on_goal,
+                                   on_red=self.on_red,
+                                   on_status_change=self.on_status_change,
+                                   on_new_match=self.on_new_match)
             matches.append(fmatch)
 
         return matches

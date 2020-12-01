@@ -1,5 +1,5 @@
 from libqtile.widget import base
-from libqtile import bar, images
+from libqtile import bar
 from libqtile.log_utils import logger
 
 from .footballscores import FootballMatch, League, FSConnectionError
@@ -59,15 +59,17 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
              {G}: Home goalscorers
              {g}: Away goalscorers
              {R}: Home red cards
-             {r}: Away red cards"""
-        ),
+             {r}: Away red cards"""),
         ("refresh_interval", 60, "Time to update data"),
         ("info_timeout", 5, "Time before reverting to default text"),
         ("startup_delay", 30, "Time before sending first web request"),
-        ("goal_indicator", "009999", "Colour of line to show team that scores"),
-        ("red_card_indicator", "bb0000", "Colour of line to show team has had a player sent off."),
+        ("goal_indicator", "009999",
+            "Colour of line to show team that scores"),
+        ("red_card_indicator", "bb0000",
+            "Colour of line to show team has had a player sent off."),
         ("always_show_red", True, "Continue to show red card indicator"),
-        ("underline_status", True, "Bar at bottom of widget to indicate status."),
+        ("underline_status", True,
+            "Bar at bottom of widget to indicate status."),
         ("status_fixture", "000000", "Colour when match has not started"),
         ("status_live", "008800", "Colour when match is live"),
         ("status_halftime", "aaaa00", "Colour when half time"),
@@ -81,7 +83,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         self.flags = {}
         self.reset_flags()
 
-        self.sources = ([],[],[])
+        self.sources = ([], [], [])
         self.matches = []
         self.match_index = 0
 
@@ -113,7 +115,7 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
         self.flags = {}
         self.matches = []
-        self.sources = ([],[],[])
+        self.sources = ([], [], [])
 
         self.timeout_add(1, self.setup)
 
@@ -180,7 +182,8 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         if self.sources[2]:
             for league in self.sources[2]:
                 if league:
-                    # League object has iterator methods so can be treated as a list
+                    # League object has iterator methods
+                    # so can be treated as a list
                     self.matches.extend(league)
 
         self.set_flags()
@@ -236,9 +239,12 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         try:
             flags = self.flags[team]
         except KeyError:
-            # This should only happen when a new match for watched teams appears
-            # Events are fired on first time, before they can be added to the flags
-            # It should be safe to ignore this as the flags will be updated separately
+            # This should only happen when a new match
+            # for watched teams appears
+            # Events are fired on first time,
+            # before they can be added to the flags
+            # It should be safe to ignore this
+            # as the flags will be updated separately
             self.flags[team] = MatchFlags()
             flags = self.flags[team]
 
