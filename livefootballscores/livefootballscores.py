@@ -46,7 +46,8 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
              "{H:.3}: {G:10}",
              "{A:.3}: {g:10}",
              "{C}"],
-            """Add extra text lines which can be displayed by clicking on widget.
+            """
+            Add extra text lines which can be displayed by clicking on widget.
             Available fields are:
              {H}: Home Team name
              {A}: Away Team name
@@ -59,7 +60,8 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
              {G}: Home goalscorers
              {g}: Away goalscorers
              {R}: Home red cards
-             {r}: Away red cards"""),
+             {r}: Away red cards
+             """),
         ("refresh_interval", 60, "Time to update data"),
         ("info_timeout", 5, "Time before reverting to default text"),
         ("startup_delay", 30, "Time before sending first web request"),
@@ -130,6 +132,9 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         self.timeout_add(self.startup_delay, self.setup)
 
     def setup(self):
+        self.qtile.run_in_executor(self._setup)
+
+    def _setup(self):
         kwargs = {"detailed": True,
                   "on_goal": self.match_event,
                   "on_red": self.match_event,
@@ -203,6 +208,9 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
                                               self.refresh)
 
     def refresh(self):
+        self.qtile.run_in_executor(self._refresh)
+
+    def _refresh(self):
         success = False
         self.reset_flags()
         try:
