@@ -48,7 +48,9 @@ class League(matchcommon):
         return self.__nonzero__()
 
     def _setup(self):
-        self.leagueid = self.findleague(self.league)
+        #self.leagueid = self.findleague(self.league)
+        lg = "-".join(self.league.lower().split(" "))
+        self.leagueid = lg
         if self.leagueid:
             self.matches = self.getMatches()
 

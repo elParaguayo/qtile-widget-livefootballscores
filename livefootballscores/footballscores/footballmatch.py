@@ -219,21 +219,24 @@ class FootballMatch(matchcommon):
                                        detailed=False)
 
     def _findTeamPage(self):
-        teams = self.getTeams()
-
-        if teams:
-            myteam = [x for x in teams
-                      if self.myteam.lower() in x["name"].lower()]
-            if myteam:
-                tm = myteam[0]["url"]
-                try:
-                    self.myteampage = "team/{}".format(tm.split("/")[4])
-                    return True
-                except Exception:
-                    self.myteampage = None
-                    return False
-
-        return False
+        # teams = self.getTeams()
+        #
+        # if teams:
+        #     myteam = [x for x in teams
+        #               if self.myteam.lower() in x["name"].lower()]
+        #     if myteam:
+        #         tm = myteam[0]["url"]
+        #         try:
+        #             self.myteampage = "team/{}".format(tm.split("/")[4])
+        #             return True
+        #         except Exception:
+        #             self.myteampage = None
+        #             return False
+        #
+        # return False
+        team = "-".join(self.myteam.lower().split(" "))
+        self.myteampage = "team/{}".format(team)
+        return True
 
     def _getScoresFixtures(self, start_date=None, end_date=None,
                            source=None, detailed=None):
