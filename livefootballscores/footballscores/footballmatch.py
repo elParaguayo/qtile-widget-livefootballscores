@@ -91,9 +91,9 @@ class FootballMatch(matchcommon):
             self.hasTeamPage = self._findTeamPage()
 
             if not self.hasTeamPage:
-                self._scanLeagues()
+                data = self._scanLeagues()
 
-            if self.hasTeamPage:
+            else:
                 self.update(first_run=events_on_first_run)
 
         if data:
@@ -215,28 +215,43 @@ class FootballMatch(matchcommon):
 
     def _scanLeagues(self):
 
-        return self._getScoresFixtures(source=ML.MORPH_FIXTURES_ALL,
-                                       detailed=False)
+        raw = self._getScoresFixtures(source=ML.MORPH_FIXTURES_ALL)
+
+        comps = raw.get("matchData", None)
+
+        if not comps:
+            return Nonce
+
+        for comp in comps:
+            matches = list(comp["tournamentDatesWithEvents"].values())[0][0]
+            matches = matches["events"]
+            for m in matches:
+                if self.checkTeamInMatch(m):
+                    return m
+
+        return None
+
+    def checkTeamInMatch(self, m):
+        home = [m["homeTeam"]["name"][x].lower()
+                    for x in ["first", "full", "abbreviation", "last"]
+                    if m["homeTeam"]["name"][x]]
+
+        away = [m["awayTeam"]["name"][x].lower()
+                    for x in ["first", "full", "abbreviation", "last"]
+                    if m["awayTeam"]["name"][x]]
+
+        return self.myteam.lower() in (home + away)
+
 
     def _findTeamPage(self):
-        # teams = self.getTeams()
-        #
-        # if teams:
-        #     myteam = [x for x in teams
-        #               if self.myteam.lower() in x["name"].lower()]
-        #     if myteam:
-        #         tm = myteam[0]["url"]
-        #         try:
-        #             self.myteampage = "team/{}".format(tm.split("/")[4])
-        #             return True
-        #         except Exception:
-        #             self.myteampage = None
-        #             return False
-        #
-        # return False
         team = "-".join(self.myteam.lower().split(" "))
-        self.myteampage = "team/{}".format(team)
-        return True
+        teampage = "https://www.bbc.co.uk/sport/football/teams/" + team
+        validteam = self.checkPage(teampage)
+        if validteam:
+            self.myteampage = "team/{}".format(team)
+            return True
+        else:
+            return False
 
     def _getScoresFixtures(self, start_date=None, end_date=None,
                            source=None, detailed=None):
@@ -516,11 +531,9 @@ class FootballMatch(matchcommon):
     def update(self, data=None, first_run=False):
 
         if data is None and not self._canUpdate():
-            self.hasTeamPage = self._findTeamPage()
-            if not self._canUpdate():
-                return False
+            data = self._scanLeagues()
 
-        if data is None:
+        elif data is None:
             rawdata = self._getScoresFixtures()
             if rawdata:
                 match = self._findMatch(rawdata)

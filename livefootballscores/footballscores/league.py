@@ -39,6 +39,12 @@ class League(matchcommon):
         else:
             raise StopIteration
 
+    def __len__(self):
+        return len(self.matches)
+
+    def __getitem__(self, index):
+        return self.matches[index]
+
     def __nonzero__(self):
 
         return bool(self.matches)
@@ -48,7 +54,6 @@ class League(matchcommon):
         return self.__nonzero__()
 
     def _setup(self):
-        #self.leagueid = self.findleague(self.league)
         lg = "-".join(self.league.lower().split(" "))
         self.leagueid = lg
         if self.leagueid:
@@ -133,7 +138,7 @@ class League(matchcommon):
         for m in data:
             home = m["homeTeam"]["name"]["abbreviation"]
             for team in self.matches:
-                if team.myteam == home:
+                if team.myteam == home: 
                     team.update(data=m)
                     break
 
@@ -141,9 +146,6 @@ class League(matchcommon):
 
         if not self.leagueid:
             self._setup()
-
-        if not self.matches:
-            return False
 
         matches = self.getMatches()
 

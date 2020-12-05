@@ -41,6 +41,15 @@ class matchcommon(object):
 
         return {"t": page, "c": type(self).REQUEST_COUNT}
 
+    def checkPage(self, page):
+
+        try:
+            rq = requests.head(page)
+            return rq.status_code == 200
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout):
+            return False
+
     def sendRequest(self, page):
 
         payload = self.__create_payload(page)
