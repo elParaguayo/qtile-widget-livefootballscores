@@ -1,6 +1,7 @@
 from libqtile.widget import base
 from libqtile import bar
 from libqtile.log_utils import logger
+from libqtile.popup import Popup
 
 from .footballscores import FootballMatch, League, FSConnectionError
 
@@ -62,6 +63,8 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
              {R}: Home red cards
              {r}: Away red cards
              """),
+        ("popup_text", "{H:>20.20} {h}-{a} {A:<20.20} {T:<5}",
+            "Format to use for popup window."),
         ("refresh_interval", 60, "Time to update data"),
         ("info_timeout", 5, "Time before reverting to default text"),
         ("startup_delay", 30, "Time before sending first web request"),
@@ -76,6 +79,27 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         ("status_live", "008800", "Colour when match is live"),
         ("status_halftime", "aaaa00", "Colour when half time"),
         ("status_fulltime", "666666", "Colour when match has ended"),
+        (
+            "popup_font",
+            "monospace",
+            "Font to use for displaying upcoming recordings. A monospace font "
+            "is recommended"
+        ),
+        (
+            "popup_opacity",
+            0.8,
+            "Opacity for popup window."
+        ),
+        (
+            "popup_padding",
+            10,
+            "Padding for popup window."
+        ),
+        (
+            "popup_display_timeout",
+            10,
+            "Seconds to show recordings."
+        ),
     ]
 
     def __init__(self, **config):
@@ -98,6 +122,13 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
         self.default_timer = None
         self.refresh_timer = None
         self.queue_timer = None
+
+        self.popup = None
+
+        # self.add_callbacks({"Button1": self.loop_match_info,
+        #                     "Button3": self.toggle_info,
+        #                     "Button4": self.scroll_up,
+        #                     "Button5": self.scroll_down})
 
     def reset_flags(self):
         for flag in self.flags:
@@ -410,15 +441,27 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
     def button_press(self, x, y, button):
         # Check if it's a right click and, if so, toggle textt
         if button == 1:
-            self.set_default_timer()
-            self.screen_index = (self.screen_index + 1) % len(self.screens)
-            self.bar.draw()
+            self.loop_match_info()
+
+        elif button == 3:
+            self.toggle_info()
 
         elif button == 4:
-            self.change_match(1)
+            self.scroll_up()
 
         elif button == 5:
-            self.change_match(-1)
+            self.scroll_down()
+
+    def loop_match_info(self):
+        self.set_default_timer()
+        self.screen_index = (self.screen_index + 1) % len(self.screens)
+        self.bar.draw()
+
+    def scroll_up(self):
+        self.change_match(1)
+
+    def scroll_down(self):
+        self.change_match(-1)
 
     def change_match(self, step):
         self.screen_index = 0
@@ -475,3 +518,89 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
 
     def cmd_refresh(self):
         return self.refresh()
+
+    def _format_matches(self):
+        lines = []
+
+        for team in self.sources[0]:
+            lines.append(team.Competition)
+            lines.append(team.formatText(self.popup_text))
+            lines.append("")
+
+        if self.sources[1]:
+            lines.append("Selected Teams:")
+            for team in self.sources[1]:
+                lines.append(team.formatText(self.popup_text))
+            lines.append("")
+
+        for league in self.sources[2]:
+            if league:
+                lines.append("{}:".format(league.LeagueName))
+                for team in league:
+                    lines.append(team.formatText(self.popup_text))
+                lines.append("")
+
+        return lines
+
+    @property
+    def bar_on_top(self):
+        return self.bar.screen.top == self.bar
+
+    def kill_popup(self):
+        self.popup.kill()
+        self.popup = None
+
+    def toggle_info(self):
+        if self.popup and not self.popup.win.hidden:
+            try:
+                self.hide_timer.cancel()
+            except AttributeError:
+                pass
+            self.kill_popup()
+
+        else:
+            self.show_matches()
+
+    def cmd_popup():
+        self.toggle_info()
+
+    def show_matches(self):
+        lines = []
+
+        if not self.matches:
+            lines.append("No matches today.")
+
+        else:
+            lines.extend(self._format_matches())
+
+
+        self.popup = Popup(self.qtile,
+                           width=self.bar.screen.width,
+                           height=self.bar.screen.height,
+                           font=self.popup_font,
+                           horizontal_padding=self.popup_padding,
+                           vertical_padding=self.popup_padding,
+                           opacity=self.popup_opacity)
+
+        self.popup.text = "\n".join(lines)
+
+        self.popup.height = (self.popup.layout.height +
+                             (2 * self.popup.vertical_padding))
+        self.popup.width = (self.popup.layout.width +
+                            (2 * self.popup.horizontal_padding))
+
+        self.popup.x = min(self.offsetx, self.bar.width - self.popup.width)
+
+        if self.bar_on_top:
+            self.popup.y = self.bar.height
+        else:
+            self.popup.y = (self.bar.screen.height - self.popup.height -
+                            self.bar.height)
+
+        self.popup.place()
+        self.popup.draw_text()
+        self.popup.unhide()
+        self.popup.draw()
+
+        self.hide_timer = self.timeout_add(self.popup_display_timeout,
+                                           self.kill_popup)

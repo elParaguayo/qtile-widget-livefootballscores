@@ -138,7 +138,7 @@ class League(matchcommon):
         for m in data:
             home = m["homeTeam"]["name"]["abbreviation"]
             for team in self.matches:
-                if team.myteam == home: 
+                if team.myteam == home:
                     team.update(data=m)
                     break
 
@@ -156,3 +156,10 @@ class League(matchcommon):
 
         if self.matches:
             self._update()
+
+    @property
+    def LeagueName(self):
+        if not self.matches:
+            return self.league
+
+        return self.matches[0].Competition
