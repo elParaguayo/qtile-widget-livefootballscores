@@ -1,5 +1,5 @@
 from libqtile.widget import base
-from libqtile import bar
+from libqtile import bar, pangocffi
 from libqtile.log_utils import logger
 from libqtile.popup import Popup
 
@@ -522,14 +522,14 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
     def _format_matches(self):
         lines = []
 
-        for team in self.sources[0]:
+        for team in [m for m in self.sources[0] if m]:
             lines.append(team.Competition)
             lines.append(team.formatText(self.popup_text))
             lines.append("")
 
         if self.sources[1]:
             lines.append("Selected Teams:")
-            for team in self.sources[1]:
+            for team in [m for m in self.sources[1] if m]:
                 lines.append(team.formatText(self.popup_text))
             lines.append("")
 
@@ -539,6 +539,9 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
                 for team in league:
                     lines.append(team.formatText(self.popup_text))
                 lines.append("")
+
+        # Last line is always blank so remove it
+        _ = lines.pop()
 
         return lines
 
@@ -582,7 +585,9 @@ class LiveFootballScoresWidget(base._Widget, base.MarginMixin):
                            vertical_padding=self.popup_padding,
                            opacity=self.popup_opacity)
 
-        self.popup.text = "\n".join(lines)
+        text = pangocffi.markup_escape_text("\n".join(lines))
+
+        self.popup.text = text
 
         self.popup.height = (self.popup.layout.height +
                              (2 * self.popup.vertical_padding))
